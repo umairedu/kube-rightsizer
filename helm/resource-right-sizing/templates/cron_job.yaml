@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "resource-right-sizing.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "resource-right-sizing.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit | default 1 }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy | default "Forbid" }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "resource-right-sizing.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "resource-right-sizing.serviceAccountName" . }}
+          {{- with .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Values.tag_version }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                {{- include "helpers.list-env-variables" . | indent 10 }}
+              {{- with .Values.resource_sizing.command }}
+              command:
+                {{- range . }}
+                - {{ . | quote }}
+                {{- end }}
+              {{- end }}
+              {{- with .Values.resource_sizing.args }}
+              args:
+                {{- range . }}
+                - {{ . | quote }}
+                {{- end }}
+              {{- else }}
+              args:
+                - python3
+                - main.py
+              {{- end }}
+              {{- with .Values.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

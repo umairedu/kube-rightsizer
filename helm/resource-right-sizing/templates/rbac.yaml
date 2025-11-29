@@ -1,0 +1,27 @@
+{{- if .Values.rbac.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "resource-right-sizing.fullname" . }}-cluster-role
+  labels:
+    {{- include "resource-right-sizing.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: ["pods", "namespaces"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "resource-right-sizing.fullname" . }}-cluster-role-binding
+  labels:
+    {{- include "resource-right-sizing.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "resource-right-sizing.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "resource-right-sizing.fullname" . }}-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

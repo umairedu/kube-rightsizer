@@ -1,0 +1,56 @@
+nameOverride: "resource-right-sizing"
+environment: production
+tag_version: "b31761f4"
+
+image:
+  repository: docker.io/umairedu/k8s-resource-right-sizing
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+rbac:
+  enabled: true
+
+podAnnotations:
+  sidecar.istio.io/inject: 'false'
+
+schedule: "0 0 * * 0"
+successfulJobsHistoryLimit: 3
+failedJobsHistoryLimit: 1
+concurrencyPolicy: Forbid
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+resource_sizing:
+  args: []
+  plain:
+    PROMETHEUS_URL: "http://prometheus-server.default.svc:9090"
+    KUBERNETES_USE_IN_CLUSTER_CONFIG: "true"
+    TARGET_NAMESPACE: ""
+    EXCLUDED_NAMESPACES: "kube-system,kube-public,kube-node-lease"
+    HOURS: "168"
+    BUFFER_PERCENT: "20"
+    OUTPUT_FORMAT: "both"
+
+  secrets:
+    SLACK_TOKEN: "secrets"
+    SLACK_CHANNEL: "slack-dev-channel"
+    SLACK_VERIFY_SSL: "true"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
