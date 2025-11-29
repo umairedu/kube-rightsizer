@@ -1,4 +1,4 @@
-name: CI / DevSecOps Pipeline
+name: CI / K8s Resource Rightsizer Pipeline
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  dev_secops:
+  k8s_resource_rightsizer:
     runs-on: ubuntu-latest
 
     steps:
