@@ -76,9 +76,22 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/ci"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          generateSarif: "1"
-          publishSarif: "1"
+          publishToken: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate Semgrep SARIF file
+      - name: Generate Semgrep SARIF
+        if: always()
+        run: |
+          pip install semgrep
+          semgrep scan --config=p/ci --sarif --output=semgrep.sarif || touch semgrep.sarif
+
+      # Upload Semgrep SARIF results to GitHub Security
+      - name: Upload Semgrep Results to GitHub Security
+        if: always() && hashFiles('semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'semgrep.sarif'
+          category: 'semgrep'
 
       # 6. Dependency Scan - Trivy (Filesystem)
       - name: Run Trivy Filesystem Scan
@@ -98,6 +111,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-filesystem'
 
       # 7. Set up Docker Buildx
       - name: Set up Docker Buildx
@@ -132,6 +146,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-image-results.sarif'
+          category: 'trivy-image'
 
       # Upload scan results as artifacts
       - name: Upload Scan Results as Artifacts
