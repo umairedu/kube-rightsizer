@@ -39,8 +39,8 @@ The tool runs as a Kubernetes CronJob, deployed via Helm chart, that:
 
 1. Clone the repository:
 ```bash
-git clone git@github.com:umairedu/kube-rightsizer.git
-cd kube-rightsizer
+git clone git@github.com:umairedu/kube-right-sizer.git
+cd kube-right-sizer
 ```
 
 2. Configure environment variables in `helm/resource-right-sizing/production/values.yaml`:
@@ -120,7 +120,7 @@ The tool provides color-coded terminal output showing current vs recommended res
 ## Project Structure
 
 ```
-kube-rightsizer/
+kube-right-sizer/
 ├── main.py                 # Main application entry point
 ├── config.py              # Configuration management (Pydantic)
 ├── services/
