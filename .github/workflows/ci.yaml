@@ -23,12 +23,28 @@ jobs:
   k8s_resource_rightsizer:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       security-events: write
       actions: read
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set short SHA
+        id: vars
+        run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Update Helm tag_version
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          sed -i "s/^tag_version:.*/tag_version: \"${{ steps.vars.outputs.short_sha }}\"/" helm/resource-right-sizing/production/values.yaml
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Auto Commit"
+          git add helm/resource-right-sizing/production/values.yaml
+          git diff --staged --quiet || (git commit -m "chore: update tag_version to ${{ steps.vars.outputs.short_sha }} [skip ci]" && git push)
 
       # 1. Setup Python
       - name: Setup Python
@@ -95,7 +111,7 @@ jobs:
           file: ./Dockerfile
           push: false
           tags: |
-            umairedu/k8s-resource-right-sizing:${{ github.sha }}
+            umairedu/k8s-resource-right-sizing:${{ steps.vars.outputs.short_sha }}
             umairedu/k8s-resource-right-sizing:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -144,7 +160,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            umairedu/k8s-resource-right-sizing:${{ github.sha }}
+            umairedu/k8s-resource-right-sizing:${{ steps.vars.outputs.short_sha }}
             umairedu/k8s-resource-right-sizing:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
