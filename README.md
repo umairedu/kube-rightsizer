@@ -111,8 +111,10 @@ The tool provides color-coded terminal output showing current vs recommended res
 
 ### Slack Notifications
 
-Weekly reports are sent to Slack with HTML-formatted tables and downloadable YAML patch files:
+#### Slack message
 ![Slack Message](screenshots/slack_message.png)
+
+#### HTML report
 ![Slack Output](screenshots/slack_html_output.png)
 
 ## Project Structure

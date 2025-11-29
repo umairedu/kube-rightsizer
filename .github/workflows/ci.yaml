@@ -3,11 +3,29 @@ name: CI / K8s Resource Rightsizer Pipeline
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'services/**'
+      - 'config.py'
+      - 'main.py'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - '.github/workflows/**'
   pull_request:
+    paths:
+      - 'services/**'
+      - 'config.py'
+      - 'main.py'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - '.github/workflows/**'
 
 jobs:
   k8s_resource_rightsizer:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
     steps:
       - uses: actions/checkout@v4
@@ -42,18 +60,28 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/ci"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          generateSarif: "1"
+          publishSarif: "1"
 
-      # 6. Dependency Scan - Trivy
-      - name: Run Trivy Scan
+      # 6. Dependency Scan - Trivy (Filesystem)
+      - name: Run Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
-          format: 'github'
-          output: 'trivy-results.json'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
           severity: 'LOW,MEDIUM,HIGH,CRITICAL'
           ignore-unfixed: false
           scanners: 'vuln,misconfig,secret'
+
+      # Upload Trivy filesystem results to GitHub Security
+      - name: Upload Trivy Filesystem Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
 
       # 7. Set up Docker Buildx
       - name: Set up Docker Buildx
@@ -79,8 +107,26 @@ jobs:
         with:
           image-ref: umairedu/k8s-resource-right-sizing:latest
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-image-results.sarif'
           severity: 'CRITICAL,HIGH'
+
+      # Upload Trivy image scan results to GitHub Security
+      - name: Upload Trivy Image Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
+      # Upload scan results as artifacts
+      - name: Upload Scan Results as Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          retention-days: 30
+          path: |
+            trivy-fs-results.sarif
+            trivy-image-results.sarif
 
       # 10. Push to Docker Hub (only on main branch)
       - name: Login to Docker Hub
