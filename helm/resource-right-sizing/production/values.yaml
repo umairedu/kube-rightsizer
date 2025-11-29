@@ -1,6 +1,6 @@
 nameOverride: "resource-right-sizing"
 environment: production
-tag_version: "cacf40f"
+tag_version: "374a8f9"
 
 image:
   repository: docker.io/umairedu/k8s-resource-right-sizing
