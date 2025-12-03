@@ -20,12 +20,7 @@ def _colorize(value: str, color: str) -> str:
     return f"{color}{value}{colorama.Fore.RESET}"
 
 def _colorize_recommendation(current_val: str, recommended_val: str, resource_type: str) -> str:
-    """
-        Resources that need increases (green)
-        Resources that can be reduced (yellow)
-        New recommendations (bright blue)
-        Significant changes (bright colors)
-    """
+    
     if not USE_COLORS:
         return recommended_val
     
@@ -228,13 +223,30 @@ def format_as_yaml(recommendations):
 def parse_resource_value(value: str) -> float:
     if value == "N/A" or not value:
         return 0.0
+    
+    value = value.strip()
+    
+    # CPU units
     if value.endswith("m"):
         return float(value[:-1]) / 1000.0
+    if value.endswith("n"):
+        return float(value[:-1]) / 1000000000.0
+    
+    # Memory binary units (base 1024)
     if value.endswith("Mi"):
         return float(value[:-2]) * 1024 * 1024
     if value.endswith("Gi"):
         return float(value[:-2]) * 1024 * 1024 * 1024
-    return float(value)
+    
+    # Memory decimal units (base 1000)
+    if value.endswith("M"):
+        return float(value[:-1]) * 1000 * 1000
+    if value.endswith("G"):
+        return float(value[:-1]) * 1000 * 1000 * 1000
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
 
 
 def resources_are_same(current: dict, recommended: dict) -> bool:

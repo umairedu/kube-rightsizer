@@ -47,6 +47,7 @@ Thumbs.db
 # Temporary files
 /tmp/
 *.tmp
+description.md
 delete_me.txt
 kube_config
 resource-recommendations.yaml
